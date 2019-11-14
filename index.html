@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Text Editor</title>
+	<link rel="stylesheet" type="text/css" href="css/main.css">
+
+	<script type="text/javascript" src="js/jquery.js"></script>
+</head>
+<body>
+	<section>
+		
+		<div class="editor_cont">
+			<div class="editor_panel">
+				<button id="bold">Bold</button>
+				<button id="italic">Italic</button>
+				<button id="detect">Detect Line breaks</button>
+				<button id="insert">Insert Comment</button>
+				<button id="fetch">Fetch Comment</button>
+			</div>
+			<div class="editor_textbody">
+				<div class="text_area"></div>
+			</div>
+		</div>
+		<p class="found_break"></p>
+		<pre class="comment_load"></pre>
+
+	</section>
+
+
+	<script type="text/javascript" src="js/ajax.js"></script>
+	<script type="text/javascript">
+		
+		$(function(){
+
+			$('.text_area').each(function(){
+			    this.contentEditable = true;
+			});
+
+			$('button').on('click',function(){
+				if($(this).text()=='Bold' || $(this).text()=='Italic'){
+					var selec = window.getSelection().toString();
+
+					var text = $('.text_area').html().trim();
+
+					var insert_start = '<b>';
+					var insert_end = '</b>';
+
+					if($(this).text()=='Italic'){
+						insert_start = '<i>';
+						insert_end = '</i>';
+					}
+
+					if(selec.length>0){
+						var start = text.indexOf(selec);
+						var end = selec.length+start;
+
+						var output = [text.slice(0, start), insert_start, 
+						text.slice(start,end),insert_end,text.slice(end)].join('');
+
+						console.log(text);
+						console.log(selec,start,end);
+						console.log(output);
+
+						$('.text_area').html(output);
+					}
+				}
+			});
+
+			var lbp = 0;
+			var pos = -1;
+
+			$('.text_area').on('keydown',function(e){
+
+				// if(e.keyCode==8){
+				// 	if(pos>0){
+				// 		pos--;
+				// 	}
+				// }
+				// else if(e.keyCode==190){
+				// 	pos++;
+				// 	var t = detectLineBreak($('.text_area').html().trim(),pos);
+				// 	console.log(t);
+				// }
+				// else{
+				// 	pos++;
+				// }
+			});
+
+			var detectLineBreak=function(text,start){
+				var s = start
+				var left_ok = false;
+				var right_ok = false;
+
+				for(i=s-1;i>=0;i--){
+					if(text[i]!='.'){
+						left_ok = true;
+						break;
+					}
+					else{
+						left_ok = false;
+						break;
+					}
+				}
+
+				for(i=s+1;i<text.length;i++){
+					if(text[i]!='.'){
+						right_ok = true;
+						break;
+					}
+					else{
+						right_ok = false;
+						break;
+					}
+				}
+
+				if(left_ok && right_ok){
+					return s;
+				}
+				else{
+					return -1;
+				}
+			}
+
+			$('#detect').on('click',function(){
+
+				var text = $('.text_area').html().trim();
+
+				var f = 'Found at Positions '
+
+				for(i=0;i<text.length;i++){
+					if(text[i]=='.'){
+						var t = detectLineBreak(text.replace(/\s/g,''),i);
+						if(t!=-1)
+							f += i+' ';
+					}
+				}
+
+				$('.found_break').text(f);
+			});
+
+			$('#fetch').on('click',function(){
+
+				requestAjax({data: {
+					action:'fetch'
+				}});
+			});
+
+			$('#insert').on('click',function(){
+
+				var c = prompt('Enter Comment');
+				var p = prompt('Enter Position of Line Break');
+				console.log(c,p);
+
+				requestAjax({data: {
+					action:'insert',
+					comment:c,
+					at_pos:p
+				}});
+			});
+		});
+	</script>
+</body>
+</html>
